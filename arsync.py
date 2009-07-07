@@ -50,8 +50,8 @@ def isClean(filename):
 # Symlink src to dest if dest is clean
 def linkFile(src, dest):
     if (os.path.islink(dest) and os.path.realpath(src) == os.path.realpath(dest)):
-	# already linked
-	return
+        # already linked
+        return
 
     if (not isClean(dest)):
         raise 'Destination %s is not up to date' % dest
