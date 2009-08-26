@@ -1,32 +1,20 @@
 #!/usr/bin/env python
 
-#    Create links from petabox CVS tree to git working copy
-#    Will probably not work *and* eat your babies.
+# Creates links from petabox SVN tree to git working copy.
+# Will probably not work *and* eat your babies.
 #
-#    Written by Michael Ang <mang chez archive.org>
-#
-#    This file is part of Bookreader Tools.
-#
-#    Bookreader Tools is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU Affero General Public License as published by
-#    the Free Software Foundation, either version 3 of the License, or
-#    (at your option) any later version.
-#
-#    Bookreader Tools is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU Affero General Public License for more details.
-#
-#    You should have received a copy of the GNU Affero General Public License
-#    along with Bookreader Tools.  If not, see <http://www.gnu.org/licenses/>.
+# mang chez archive.org
 
 import pipes
 import commands
 import re
 import os
+import shutil
 
-# Map of git dirs -> CVS dirs
-gitToCVS = {
+from optparse import OptionParser
+
+# Map of git dirs -> SVN dirs
+gitToSVN = {
     'GnuBook': 'sf/bookreader',
     'GnuBookIA/inc': 'common',
     'GnuBookIA/www': 'sf/bookreader',
@@ -34,65 +22,129 @@ gitToCVS = {
 }
 
 gitRoot = '~/bookreader'
-cvsRoot = '~/petabox/www'
+svnRoot = '~/petabox/www'
 
-# Returns true if file is up to date with CVS
+# Returns true if file is up to date
 def isClean(filename):
-    quotedFilename = pipes.quote(filename)
-    cmd = 'cvs status %s' % quotedFilename
-    output = commands.getoutput(cmd)
-    # print "%s => %s" % (cmd, output)
-    if (re.search(r'Status: Up-to-date', output, re.MULTILINE)):
+    status = svnStatus(filename)
+    if (re.search(r'^ ', status)):
         return True
     else:
         return False
-
-# Symlink src to dest if dest is clean
-def linkFile(src, dest):
-    if (os.path.islink(dest) and os.path.realpath(src) == os.path.realpath(dest)):
-        # already linked
-        return
-
-    if (not isClean(dest)):
-        raise 'Destination %s is not up to date' % dest
         
-    os.remove(dest)
-    os.symlink(src, dest)
+def svnStatus(filename):
+    quotedFilename = pipes.quote(filename)
+    cmd = 'svn stat -v %s' % quotedFilename
+    output = commands.getoutput(cmd)
+    return output[0]
 
-def linkDirectory(src, dest):
-    print "Linking files in %s to %s" % (src, dest)
+# Symlink src to dest 
+def linkFile(src, dest, force=False):
+    if (os.path.islink(dest) and os.path.realpath(src) == os.path.realpath(dest)):
+	# already linked
+	return
+
+    if (force or isClean(dest)):
+        os.remove(dest)
+        os.symlink(src, dest)
+    else:
+        raise Exception('Destination %s is not up to date' % dest)
+
+def linkDirectory(src, dest, force=False):
 
     for file in os.listdir(src):
         # Recursively handle sub-directories
         if os.path.isdir(os.path.join(src, file)):
-            linkDirectory(os.path.join(src, file), os.path.join(dest, file))
+            linkDirectory(os.path.join(src, file), os.path.join(dest, file), force)
             continue
             
         srcFile = os.path.join(src, file)
         destFile = os.path.join(dest, file)
-        print "  %s -> %s" % (srcFile, destFile)
-        linkFile(srcFile, destFile)
+        # print "  %s -> %s" % (srcFile, destFile)
+        print "    %s" % (file)
+        linkFile(srcFile, destFile, force)
         
 def raiseError(message):
     print "ERROR: %s" % message
-    raise message
+    raise Exception(message)
+    
 
-
-def main():
-    global gitToCVS, gitRoot, cvsRoot
+def linkSVNtoGit(gitRoot, svnRoot, force=False):
+    global gitToSVN
     
     #gitDir = os.path.expanduser(gitRoot)
     #cvsDir = os.path.expanduser(cvsRoot)
     
-    for srcDir, destDir in gitToCVS.items():
+    for srcDir, destDir in gitToSVN.items():
         srcDir = os.path.join(gitRoot, srcDir)
-        destDir = os.path.join(cvsRoot, destDir)
+        destDir = os.path.join(svnRoot, destDir)
         
+        print "Linking files in %s to %s" % (srcDir, destDir)
         srcDir = os.path.expanduser(srcDir)
         destDir = os.path.expanduser(destDir)
         
-        linkDirectory(srcDir, destDir)
+        linkDirectory(srcDir, destDir, force)
+        
+    print "Files in SVN working copy are now LINKS to git working copy"
+        
+def copyGitToSVN(gitRoot, svnRoot, force=False):
+    global gitToSVN
+    
+    for srcDir, destDir in gitToSVN.items():
+        srcDir = os.path.join(gitRoot, srcDir)
+        destDir = os.path.join(svnRoot, destDir)
+        
+        print "Copying files in %s to %s" % (srcDir, destDir)
+        srcDir = os.path.expanduser(srcDir)
+        destDir = os.path.expanduser(destDir)
+        
+        copyFiles(srcDir, destDir, force)
+        
+    print "Files in SVN working copy are now REGULAR files ready for checkin"
+        
+def copyFiles(srcDir, destDir, force=False):
+    for file in os.listdir(srcDir):
+        srcFile = os.path.join(srcDir, file)
+        destFile = os.path.join(destDir, file)
+        if os.path.isdir(srcFile):
+            copyFiles(srcFile, destFile)
+            continue
+            
+        status = svnStatus(destFile)
+        if (force or os.path.islink(destFile) or isClean(destFile)):
+            print "    %s" % (file)
+            os.remove(destFile)
+            shutil.copy(srcFile, destFile)
+        else:
+            raise Exception("Destination file %s is not clean" % destFile)
+        
+def main():
+    parser = OptionParser()
+    parser.add_option('-l', '--link',
+        help="Create symlinks in SVN working dir point to git working dir",
+        action="store_true",
+        default=False)
+    parser.add_option('-g', '--git2svn',
+        help="Copy files from git working dir to SVN working dir",
+        action="store_true",
+        default=False)
+    parser.add_option('', '--gitroot', help="Git root dir (default %default)", default="~/bookreader")
+    parser.add_option('', '--svnroot', help="SVN www dir (default %default)", default="~/petabox/www")
+    parser.add_option('-f', '--force',
+        help="Overide modification checks. (Ready, fire, aim!)",
+        default=False,
+        action="store_true")
 
+    (options, args) = parser.parse_args()
+    
+    if (options.link):
+        linkSVNtoGit(options.gitroot, options.svnroot, options.force)
+        
+    elif (options.git2svn):
+        copyGitToSVN(options.gitroot, options.svnroot, options.force)
+        
+    else:
+        parser.print_help()
 
 if __name__ == "__main__":
     main()
