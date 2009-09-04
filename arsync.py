@@ -44,7 +44,9 @@ def linkFile(src, dest, force=False):
 	# already linked
 	return
 
-    if (force or isClean(dest)):
+    if (not os.path.exists(dest)):
+        os.symlink(src, dest)
+    elif (force or isClean(dest)): # file exists
         os.remove(dest)
         os.symlink(src, dest)
     else:
@@ -109,7 +111,9 @@ def copyFiles(srcDir, destDir, force=False):
         if os.path.isdir(srcFile):
             copyFiles(srcFile, destFile)
             continue
-            
+        
+        # $$$ if the file does not exist we should copy then add to SVN
+        
         status = svnStatus(destFile)
         if (force or os.path.islink(destFile) or isClean(destFile)):
             print "    %s" % (file)
