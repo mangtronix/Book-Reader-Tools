@@ -15,10 +15,10 @@ from optparse import OptionParser
 
 # Map of git dirs -> SVN dirs
 gitToSVN = {
-    'GnuBook': 'sf/bookreader',
-    'GnuBookIA/inc': 'common',
-    'GnuBookIA/www': 'sf/bookreader',
-    'GnuBookIA/datanode': 'datanode/GnuBook'
+    'BookReader': 'sf/bookreader',
+    'BookReaderIA/inc': 'common',
+    'BookReaderIA/www': 'sf/bookreader',
+    'BookReaderIA/datanode': 'datanode/BookReader'
 }
 
 gitRoot = '~/bookreader'
@@ -114,10 +114,12 @@ def copyFiles(srcDir, destDir, force=False):
         
         # $$$ if the file does not exist we should copy then add to SVN
         
-        status = svnStatus(destFile)
         if (force or os.path.islink(destFile) or isClean(destFile)):
             print "    %s" % (file)
-            os.remove(destFile)
+            try:
+                os.remove(destFile)
+            except OSError:
+                pass
             shutil.copy(srcFile, destFile)
         else:
             raise Exception("Destination file %s is not clean" % destFile)
