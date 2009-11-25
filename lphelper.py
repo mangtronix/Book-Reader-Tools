@@ -3,20 +3,22 @@
 #    Launchpad helper
 #    Written by Michael Ang <mang chez archive.org>
 #
-#    This file is part of Bookreader Tools
+#    A bit of a mish-mash: could be refactored.
 #
-#    Bookreader Tools is free software: you can redistribute it and/or modify
+#    This file is part of Internet Archive BookReader Tools
+#
+#    BookReader Tools is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as published by
 #    the Free Software Foundation, either version 3 of the License, or
 #    (at your option) any later version.
 #
-#    Bookreader Tools is distributed in the hope that it will be useful,
+#    BookReader Tools is distributed in the hope that it will be useful,
 #    but WITHOUT ANY WARRANTY; without even the implied warranty of
 #    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #    GNU Affero General Public License for more details.
 #
 #    You should have received a copy of the GNU Affero General Public License
-#    along with Bookreader Tools.  If not, see <http://www.gnu.org/licenses/>.
+#    along with BookReader Tools.  If not, see <http://www.gnu.org/licenses/>.
 
 from launchpadlib.launchpad import Launchpad, STAGING_SERVICE_ROOT, EDGE_SERVICE_ROOT
 from launchpadlib.credentials import Credentials
@@ -66,7 +68,54 @@ class LaunchpadHelper:
     milestone = project.getMilestone(name = milestoneName)
     milestoneTasks = project.searchTasks(milestone = milestone)
     return milestoneTasks
+
+  def migrate(self, oldProjectName, newProjectName):
+    oldProject = self.launchpad.projects[oldProjectName]
+    newProject = self.launchpad.projects[newProjectName]
     
+    # Find open milestones
+    #  Create milestone in new project
+    
+    # Find open tasks
+    tasks = oldProject.searchTasks() # All open tasks
+    
+    # For each bug
+    for oldTask in tasks:
+        bug = oldTask.bug
+        print "Processing %s - %s" % (bug, bug.title)
+        
+        #  Also affects new project
+        if not newProject.self_link in [task.target.self_link for task in bug.bug_tasks]:
+            newTask = bug.addTask(target = newProject)
+            
+            #  Status
+            newTask.status = oldTask.status
+            
+            #  Importance
+            newTask.importance = oldTask.importance
+            
+            #  Assigned to
+            newTask.assignee = oldTask.assignee
+            
+            #  Milestone
+            if oldTask.milestone:
+                milestoneName = oldTask.milestone.self_link.split('/')[-1] # Yuck
+                newMilestone = newProject.getMilestone(name = milestoneName)
+                if not newMilestone:
+                    raise Exception("Couldn't find milestone %s" % milestoneName)
+                else:
+                    newTask.milestone = newMilestone
+            
+            newTask.lp_save()
+        
+  def getProject(self, projectName):
+    return self.launchpad.projects[projectName]
+    
+  def getMilestone(self, project, milestoneName):
+    return project.getMilestone(name = milestoneName)
+    
+  def getOpenTasks(self, project):
+    return project.searchTasks(status = ['New','Confirmed','Triaged','In Progress','Unknown'])
     
 #### Some play functions
     
