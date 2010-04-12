@@ -103,6 +103,32 @@ def copyGitToSVN(gitRoot, svnRoot, force=False):
         copyFiles(srcDir, destDir, force)
         
     print "Files in SVN working copy are now REGULAR files ready for checkin"
+    
+def copySVNtoGit(gitRoot, svnRoot, force=False):
+    """
+    $$$ Not fully implemented.
+    """
+    global gitToSVN
+    
+    for gitDir, svnDir in gitToSVN.items():
+        gitDir = os.path.join(gitRoot, gitDir)
+        svnDir = os.path.join(svnRoot, svnDir)
+        
+        print "Copying files in %s to %s" % (svnDir, gitDir)
+        gitDir = os.path.expanduser(gitDir)
+        svnDir = os.path.expanduser(svnDir)
+        
+        for file in os.listdir(gitDir):
+            srcFile = os.path.join(svnDir, file)
+            destFile = os.path.join(gitDir, file)
+            
+            if (os.path.isdir(srcFile)):
+                print "  Skipping directory %s" % srcFile
+            else:
+                # print "  Copying %s -> %s" % (srcFile, destFile)
+                shutil.copy(srcFile, destFile)
+        
+    print "Files in SVN working copy are now REGULAR files ready for checkin"
         
 def copyFiles(srcDir, destDir, force=False):
     for file in os.listdir(srcDir):
@@ -134,6 +160,10 @@ def main():
         help="Copy files from git working dir to SVN working dir",
         action="store_true",
         default=False)
+    parser.add_option('-s', '--svn2git',
+        help="Copies files that exist in git from svn to git",
+        action="store_true",
+        default=False)
     parser.add_option('', '--gitroot', help="Git root dir (default %default)", default="~/bookreader")
     parser.add_option('', '--svnroot', help="SVN www dir (default %default)", default="~/petabox/www")
     parser.add_option('-f', '--force',
@@ -148,6 +178,9 @@ def main():
         
     elif (options.git2svn):
         copyGitToSVN(options.gitroot, options.svnroot, options.force)
+        
+    elif (options.svn2git):
+        copySVNtoGit(options.gitroot, options.svnroot, options.force)
         
     else:
         parser.print_help()
