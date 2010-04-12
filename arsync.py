@@ -135,7 +135,7 @@ def copyFiles(srcDir, destDir, force=False):
         srcFile = os.path.join(srcDir, file)
         destFile = os.path.join(destDir, file)
         if os.path.isdir(srcFile):
-            copyFiles(srcFile, destFile)
+            copyFiles(srcFile, destFile, force)
             continue
         
         # $$$ if the file does not exist we should copy then add to SVN
