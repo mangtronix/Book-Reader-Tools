@@ -117,6 +117,18 @@ class LaunchpadHelper:
   def getOpenTasks(self, project):
     return project.searchTasks(status = ['New','Confirmed','Triaged','In Progress','Unknown'])
     
+  def changeMilestone(self, projectName, oldMilestoneName, newMilestoneName):
+    """Change tasks from old milestone to new milestone"""
+    project = self.getProject(projectName)
+    newMilestone = self.getMilestone(project, newMilestoneName)
+    if not newMilestone:
+        raise Exception("Couldn't fine milestone %s" % newMilestoneName)
+    tasks = self.tasksForMilestone(projectName, oldMilestoneName)
+    suffix = ''
+    for task in tasks:
+        task.milestone = newMilestone
+        task.lp_save()
+    
 #### Some play functions
     
 def helloWorld(lph):
@@ -186,14 +198,15 @@ def getLphStaging():
 #### Main
 
 def main():
-    lph = getLphStaging()
-    # lph = getLphEdge()
+    # lph = getLphStaging()
+    lph = getLphEdge()
     
     # playAround(lph)
     
-    dumpMilestoneTasks(lph, "gnubook", "0.9.11")    
+    # dumpMilestoneTasks(lph, "gnubook", "0.9.11")    
     # transitionToReleased(lph, "gnubook", "0.9.10")
     # dumpMilestoneTasks(lph, "gnubook", "0.9.10")
+    lph.changeMilestone('bookreader', 'r24', 'r25')
 
 if __name__ == "__main__":
     main()
