@@ -142,20 +142,24 @@ def timePreview(searchQuery):
     
     cumulativetime = 0
     imageNum = 1
-    for searchResult in searchResults:
-        print "Getting preview for %s" % searchResult['identifier']
-        resultStartTime = time.time()
-        #bookInfo = getBookInfo(searchResult['identifier'])
-        #previewUrl = getPreviewUrl(bookInfo)
-        previewUrl = synthesizePreviewUrl(searchResult['identifier'])
-        status, headers = retrieveUrl(previewUrl, '/dev/null')
-        resultEndTime = time.time()
-        print "  %02.3f seconds - status %s" % ((resultEndTime - resultStartTime), status)
-        
-        cumulativeTime = resultEndTime - startTime
-        print "  Average %02.3f seconds/image" % (cumulativeTime / imageNum)
-        
-        imageNum += 1
+    try:
+        for searchResult in searchResults:
+            print "Getting preview for %s" % searchResult['identifier']
+            resultStartTime = time.time()
+            #bookInfo = getBookInfo(searchResult['identifier'])
+            #previewUrl = getPreviewUrl(bookInfo)
+            previewUrl = synthesizePreviewUrl(searchResult['identifier'])
+            status, headers = retrieveUrl(previewUrl, '/dev/null')
+            resultEndTime = time.time()
+            print "  %02.3f seconds - status %s" % ((resultEndTime - resultStartTime), status)
+            
+            cumulativeTime = resultEndTime - startTime
+            print "  Average %02.3f seconds/image" % (cumulativeTime / imageNum)
+            
+            imageNum += 1
+            
+    except KeyboardInterrupt:
+        pass
     
     averageTime = cumulativeTime / imageNum
     
@@ -172,4 +176,4 @@ def humanizeTime(secs):
 
 if __name__ == "__main__":
     #main()
-    timePreview('title:kite')
+    timePreview('title:whale')
