@@ -2,6 +2,7 @@
 
 import optparse
 import simplejson as json
+import time
 import urllib
 import urllib2
 
@@ -70,6 +71,11 @@ def getPreviewUrl(bookInfo):
     else:
         return None
         
+def synthesizePreviewUrl(identifier, bookId = None):
+    if not bookId:
+        bookId = identifier
+    return 'http://www-mang.archive.org/download/%s/page/%s_preview.jpg' % (identifier, bookId)
+        
 def retrieveUrl(url, destFilename):
     req = urllib2.Request(url)
     try:
@@ -95,7 +101,7 @@ def main():
     #searchResults = [{'title':'Manual test', 'identifier': 'permstestbook'}]
     
     print "Found %d search results" % len(searchResults)
-    
+        
     for searchResult in searchResults:
         identifier = searchResult['identifier']
         print "Book title from search results: %s" % searchResult['title'][:50]
@@ -125,6 +131,45 @@ def main():
             status, headers = retrieveUrl(coverUrls[0], '%s_cover.jpg' % identifier)        
             # print "  Cover Headers:"
             # print headers
+            
+def timePreview(searchQuery):
+    print "Searching with query: %s" % searchQuery
+    searchResults = search(searchQuery)
+    
+    print "Found %d search results" % len(searchResults)
+    
+    startTime = time.time()
+    
+    cumulativetime = 0
+    imageNum = 1
+    for searchResult in searchResults:
+        print "Getting preview for %s" % searchResult['identifier']
+        resultStartTime = time.time()
+        #bookInfo = getBookInfo(searchResult['identifier'])
+        #previewUrl = getPreviewUrl(bookInfo)
+        previewUrl = synthesizePreviewUrl(searchResult['identifier'])
+        status, headers = retrieveUrl(previewUrl, '/dev/null')
+        resultEndTime = time.time()
+        print "  %02.3f seconds - status %s" % ((resultEndTime - resultStartTime), status)
+        
+        cumulativeTime = resultEndTime - startTime
+        print "  Average %02.3f seconds/image" % (cumulativeTime / imageNum)
+        
+        imageNum += 1
+    
+    averageTime = cumulativeTime / imageNum
+    
+    print "Overall %02.3f seconds/image - %d images in %.2f seconds" % ( averageTime, imageNum, cumulativeTime)
+    imagesToProcess = 80000
+    print "%d images would take %s" % (imagesToProcess, humanizeTime(cumulativeTime * imagesToProcess))
+    
+def humanizeTime(secs):
+    """From http://www.goldb.org/goldblog/CommentView,guid,6ccfef1b-c4f4-4567-8261-7be3280716b8.aspx"""
+    mins, secs = divmod(secs, 60)
+    hours, mins = divmod(mins, 60)
+    days, hours = divmod(hours, 24)
+    return '%d days %02d:%02d:%02d' % (days, hours, mins, secs)
 
 if __name__ == "__main__":
-    main()
+    #main()
+    timePreview('title:kite')
