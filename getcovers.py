@@ -165,7 +165,7 @@ def timePreview(searchQuery):
     
     print "Overall %02.3f seconds/image - %d images in %.2f seconds" % ( averageTime, imageNum, cumulativeTime)
     imagesToProcess = 80000
-    print "%d images would take %s" % (imagesToProcess, humanizeTime(cumulativeTime * imagesToProcess))
+    print "%d images would take %s" % (imagesToProcess, humanizeTime(averageTime * imagesToProcess))
     
 def humanizeTime(secs):
     """From http://www.goldb.org/goldblog/CommentView,guid,6ccfef1b-c4f4-4567-8261-7be3280716b8.aspx"""
