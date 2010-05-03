@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #    Launchpad helper
-#    Written by Michael Ang <mang chez archive.org>
+#    Written by Michael Ang <http://github.com/mangtronix>
 #
 #    A bit of a mish-mash: could be refactored.
 #
@@ -28,6 +28,7 @@ import launchpadlib
 import os.path
 import string
 import commands
+import optparse
 
 class LaunchpadHelper:
 
@@ -206,7 +207,7 @@ def main():
     # dumpMilestoneTasks(lph, "gnubook", "0.9.11")    
     # transitionToReleased(lph, "gnubook", "0.9.10")
     # dumpMilestoneTasks(lph, "gnubook", "0.9.10")
-    lph.changeMilestone('bookreader', 'r24', 'r25')
+    # lph.changeMilestone('bookreader', 'r25', 'r26')
 
 if __name__ == "__main__":
     main()

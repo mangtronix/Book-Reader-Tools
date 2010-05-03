@@ -10,7 +10,7 @@ def rawSearch(searchQuery):
     """Return search results as JSON string, including search result wrapper"""
     
     # We add to just search for scanned books
-    searchUrl = "http://www.archive.org/advancedsearch.php?q=" + urllib.quote_plus(searchQuery) + "+AND+mediatype%3A%28texts%29+AND+format%3A%28Single+Page+Processed%29&fl%5B%5D=identifier&fl%5B%5D=title&sort%5B%5D=&sort%5B%5D=&sort%5B%5D=&rows=50&page=1&output=json&save=yes"
+    searchUrl = "http://www.archive.org/advancedsearch.php?q=" + urllib.quote_plus(searchQuery) + "+AND+mediatype%3A%28texts%29+AND+format%3A%28Single+Page+Processed%29&fl%5B%5D=identifier&fl%5B%5D=title&sort%5B%5D=&sort%5B%5D=&sort%5B%5D=&rows=500&page=1&output=json&save=yes"
     f = urllib2.urlopen(searchUrl)
     json = f.read()
     f.close()
@@ -71,10 +71,10 @@ def getPreviewUrl(bookInfo):
     else:
         return None
         
-def synthesizePreviewUrl(identifier, bookId = None):
+def synthesizePreviewUrl(identifier, bookId = None, page = 'preview'):
     if not bookId:
         bookId = identifier
-    return 'http://www-mang.archive.org/download/%s/page/%s_preview.jpg' % (identifier, bookId)
+    return 'http://www.archive.org/download/%s/page/%s_%s.jpg' % (identifier, bookId, page)
         
 def retrieveUrl(url, destFilename):
     req = urllib2.Request(url)
@@ -96,7 +96,8 @@ def retrieveUrl(url, destFilename):
     return response.code, response.headers
     
 def main():
-    searchResults = search('title:round')
+    #searchResults = search('title:round')
+    searchResults = search('collection:printdisabled')
     
     #searchResults = [{'title':'Manual test', 'identifier': 'permstestbook'}]
     
@@ -105,11 +106,16 @@ def main():
     for searchResult in searchResults:
         identifier = searchResult['identifier']
         print "Book title from search results: %s" % searchResult['title'][:50]
-        bookInfo = getBookInfo(identifier)
-        print "Book title from book info: %s" % (bookInfo['title'][:50])
-        coverUrls = getCoverUrls(bookInfo)
-        titleUrl = getTitleUrl(bookInfo)
-        previewUrl = getPreviewUrl(bookInfo)
+        
+        #bookInfo = getBookInfo(identifier)
+        #print "Book title from book info: %s" % (bookInfo['title'][:50])
+        #coverUrls = getCoverUrls(bookInfo)
+        #titleUrl = getTitleUrl(bookInfo)
+        #previewUrl = getPreviewUrl(bookInfo)
+        
+        previewUrl = synthesizePreviewUrl(identifier, page = 'preview')
+        titleUrl = synthesizePreviewUrl(identifier, page = 'title')
+        coverUrls = [synthesizePreviewUrl(identifier, page = 'cover')]
         
         if previewUrl:
             print "  Preview: %s" % previewUrl
@@ -175,5 +181,7 @@ def humanizeTime(secs):
     return '%d days %02d:%02d:%02d' % (days, hours, mins, secs)
 
 if __name__ == "__main__":
-    #main()
-    timePreview('title:whale')
+    main()
+    #timePreview('title:whale')
+    #timePreview('collection:printdisabled')
+
