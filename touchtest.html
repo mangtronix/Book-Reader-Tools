@@ -1,0 +1,198 @@
+<html>
+<head>
+  <title>Touch Test</title>
+  <meta name="viewport" content="width=device-width, maximum-scale=1.0" />
+  
+  <style type="text/css">
+  	body {
+  		-webkit-user-select: none;
+ 	}
+  
+    #touchlog {
+        background-color: #AAAAAA;
+        overflow: auto;
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        height: 10em;
+        width: 100%;
+    }
+    
+    .message {
+        border: 0;
+        padding: 0;
+        margin: 0;
+    }
+
+    .touchpoint {
+        background-color: hsl(0, 100%, 50%);
+        display: block;
+        width: 100px;
+        height: 100px;
+        -moz-border-radius: 20px;
+        -webkit-border-radius: 20px;
+        margin: 0;
+        padding: 0;
+        position: absolute;
+        font-size: 2em;
+    }
+    
+  </style>
+  
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+  <script type="text/javascript">
+
+  var log = function(message) {
+    // Remove all but last n messages
+    var numMessages = $('#touchlog .message').length;
+    $('#touchlog .message:lt(' + (numMessages - 10) + ')').remove();
+    
+    $('#touchlog')
+        .append('<p class="message">' + message + '</p>')
+        .scrollTop( $('#touchlog').attr('scrollHeight') );
+  };
+    
+  var bindTouch = function() {
+    var jTouchPoints = [];
+    for (var i = 0; i < 20; i++) {
+        var jTouchPoint = $('<span class="touchpoint">' + i + '</span>').hide().appendTo('body');
+        var colour = 'hsl(' + ((360 / 10) * i) % 360 + ', 100%, 50%)';
+        jTouchPoint.css( 'background-color', colour );
+        jTouchPoints[i] = jTouchPoint;
+    };
+    
+    var updateFromTouches = function(touches) {
+        $('.touchpoint').hide();
+        
+        for (var i = 0; i < touches.length; i++) {
+            var touch = touches[i];
+            var jTouchPoint = jTouchPoints[i];
+            var newPos = {
+                left: touch.pageX - jTouchPoint.width() / 2,
+                top: touch.pageY - jTouchPoint.height() / 2,
+            };
+            jTouchPoint.css(newPos).show();
+        }
+    };
+    
+    $('body')
+    
+    .bind('touchstart', function (event) {
+        event.preventDefault();
+        var touches = event.originalEvent.touches;
+        log('touchstart: touches(' + touches.length + ')');
+        
+        updateFromTouches(touches);
+    })
+    
+    .bind('touchmove', function (event) {
+        event.preventDefault();
+        var touches = event.originalEvent.touches;
+        log('&nbsp;&nbsp;touchmove: touches(' + touches.length + '/' + event.originalEvent.changedTouches.length +')');
+        
+        updateFromTouches(touches);
+    })
+    
+    .bind('touchend', function (event) {
+        event.preventDefault();
+        log('touchend: touches(' + event.originalEvent.touches.length + ')');
+    })
+    
+    .bind('gesturestart', function (event) {
+        event.preventDefault();
+        log('gesturestart');
+    })
+    
+    .bind('gesturechange', function (event) {
+        event.preventDefault();
+        var rot = event.originalEvent.rotation.toFixed(2);
+        var scale = event.originalEvent.scale.toFixed(2);
+        log('&nbsp;&nbsp;gesturechange: rot(' + rot + ') scale(' + scale + ')');
+    })
+    
+    .bind('gestureend', function(event) {
+        event.preventDefault();
+        log('gestureend');
+    })
+   
+    
+  };
+  
+  var synthesizeTouchEvent = function(which, pageX, pageY) {
+  	var event = $.Event(which);
+  	var touches = [{ 'pageX': pageX, 'pageY': pageY }];
+  	// $$$ correct for touchend?
+  	event.originalEvent = { 'touches': touches, 'changedTouches': touches };
+  	touches = null;
+  	return event;
+  };
+  
+  var bindMouseTouch = function() {
+  	$('body')
+  	.bind('mousedown', function(event) {
+  		if (event.which != 1) {
+  			// not left button
+  			return true;
+  		};
+  		
+  		log('mousedown: ' + event.pageX + ',' + event.pageY);
+  		event.preventDefault();
+  		
+  		if ($.data(this, 'mousestate') == 'down') {
+  			return;
+  		} else {
+  			$.data(this, 'mousestate', 'down');
+  		}
+  		var touch = synthesizeTouchEvent('touchstart', event.pageX, event.pageY);
+  		$(event.target).trigger(touch);
+ 	})
+ 	.bind('mousemove', function(event) {
+ 	  	if (event.which != 1) {
+  			// not left button
+  			return true;
+  		};
+
+ 		event.preventDefault();
+ 		
+ 		if ($.data(this, 'mousestate') != 'down') {
+ 			return;
+ 		}
+ 		log('mousemove: ' + event.pageX + ',' + event.pageY);
+  		var touch = synthesizeTouchEvent('touchmove', event.pageX, event.pageY);
+ 		$(event.target).trigger(touch);
+ 	})
+ 	.bind('mouseup', function(event) {
+ 	  	if (event.which != 1) {
+  			// not left button
+  			return true;
+  		};
+
+ 		log('mouseup: ' + event.pageX + ',' + event.pageY);
+ 		event.preventDefault();
+ 		
+ 		if ($.data(this, 'mousestate') == 'down') {
+			var touch = synthesizeTouchEvent('touchend', event.pageX, event.pageY);
+			$(event.target).trigger(touch);
+		};
+		$.data(this, 'mousestate', 'up');
+ 	});
+  };
+  
+  $(document).ready(function() {
+    log('Started');
+    bindTouch();
+    bindMouseTouch();
+  });
+  </script>
+</head>
+<body>
+
+<h1>Touch Test</h1>
+
+<span class='touchpoint'>&nbsp;</span>
+
+<div id='touchlog'>
+</div>
+
+</body>
+</html>

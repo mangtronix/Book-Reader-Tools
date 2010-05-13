@@ -119,7 +119,6 @@ def main():
         
         if previewUrl:
             print "  Preview: %s" % previewUrl
-            # XXX need to check for 403 and other codes
             status, headers = retrieveUrl(previewUrl, "%s_preview.jpg" % identifier)
             print "    Status: %s" % status
             #print "    Headers:"
