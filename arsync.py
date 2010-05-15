@@ -41,9 +41,10 @@ def svnStatus(filename):
 # Symlink src to dest 
 def linkFile(src, dest, force=False):
     if (os.path.islink(dest) and os.path.realpath(src) == os.path.realpath(dest)):
-	# already linked
-	return
+        # already linked
+        return
 
+    makePath(dest)
     if (not os.path.exists(dest)):
         os.symlink(src, dest)
     elif (force or isClean(dest)): # file exists
@@ -57,6 +58,7 @@ def linkDirectory(src, dest, force=False):
     for file in os.listdir(src):
         # Recursively handle sub-directories
         if os.path.isdir(os.path.join(src, file)):
+            makePath(dest)
             linkDirectory(os.path.join(src, file), os.path.join(dest, file), force)
             continue
             
@@ -135,6 +137,7 @@ def copyFiles(srcDir, destDir, force=False):
         srcFile = os.path.join(srcDir, file)
         destFile = os.path.join(destDir, file)
         if os.path.isdir(srcFile):
+            makePath(destFile)
             copyFiles(srcFile, destFile, force)
             continue
         
@@ -149,6 +152,10 @@ def copyFiles(srcDir, destDir, force=False):
             shutil.copy(srcFile, destFile)
         else:
             raise Exception("Destination file %s is not clean" % destFile)
+          
+def makePath(path):
+    if not os.path.exists(os.path.dirname(path)):
+        os.makedirs(os.path.normpath(os.path.abspath(path)))
         
 def main():
     parser = OptionParser()
