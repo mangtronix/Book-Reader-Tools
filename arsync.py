@@ -155,7 +155,7 @@ def copyFiles(srcDir, destDir, force=False):
           
 def makePath(path):
     if not os.path.exists(os.path.dirname(path)):
-        os.makedirs(os.path.normpath(os.path.abspath(path)))
+        os.makedirs(os.path.normpath(os.path.abspath(os.path.dirname(path))))
         
 def main():
     parser = OptionParser()
