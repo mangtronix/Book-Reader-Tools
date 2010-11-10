@@ -30,7 +30,7 @@ echo "Current (non-expired) loans: $CURRENT"
 echo
 echo "Total outstanding after refresh (all these loans are current): $NEW_COMPLETED"
 echo "New successful ACS loans: $NEW_SUCCESSFUL (out of $ACS_IN_PROGRESS attempted)"
-echo "ACS success rate: $SUCCESS_RATE %"
+echo "ACS success rate: $SUCCESS_RATE%"
 echo 
 echo "BookReader loans: $BOOKREADER ($BOOKREADER_PERCENT%)"
 echo "PDF loans attempted: $PDF ($PDF_PERCENT%)"
