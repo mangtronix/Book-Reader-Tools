@@ -35,3 +35,5 @@ echo
 echo "BookReader loans: $BOOKREADER ($BOOKREADER_PERCENT%)"
 echo "PDF loans attempted: $PDF ($PDF_PERCENT%)"
 echo "EPUB loans attempted: $EPUB ($EPUB_PERCENT%)"
+echo
+echo "Current successful outstanding loans: $NEW_COMPLETED"
